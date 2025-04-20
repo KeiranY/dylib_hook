@@ -1,6 +1,34 @@
-# Rust Dylib Hijacking  Framework
+# Rust Dylib Hijacking Framework
 
 This project provides a framework for hooking functions loaded from dynamic libraries on Linux. It allows you to intercept and modify the behavior of functions at runtime, making it useful for debugging, monitoring, or altering the behavior of existing applications.
+
+## Example
+
+To run the example provided in this project, follow these steps:
+
+1. Navigate to the `examples/block_reading` directory:
+   ```bash
+   cd examples/block_reading
+   ```
+
+2. View the contents of `/etc/passwd` to observe the original behavior:
+   ```bash
+   cat /etc/passwd
+   ```
+    ![Before Hook](examples/block_reading/before.png)
+
+3. Build the example:
+   ```bash
+   cargo build
+   ```
+
+4. Use the `LD_PRELOAD` environment variable to load the hook and run the example:
+   ```bash
+   LD_PRELOAD=target/debug/libblock_reading.so cat /etc/passwd
+   ```
+    ![After Hook](examples/block_reading/after.png)
+
+
 
 ## Usage
 
@@ -94,4 +122,3 @@ println!("File contents: {}", contents);
 // Re-enable all hooks
 enable_hooks();
 ```
-
