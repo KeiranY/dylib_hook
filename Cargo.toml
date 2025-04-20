@@ -1,0 +1,14 @@
+[package]
+name = "dylib_hook"
+version = "0.1.0"
+edition = "2024"
+authors = ["Keiran Young"]
+description = "A framework for hooking functions loaded from dynamic libraries on Linux"
+readme = "README.md"
+license = "Unlicense"
+repository = "https://github.com/KeiranY/dylib_hook"
+keywords = ["hook", "hijack", "ld_preload", "linux"]
+categories = ["rust-patterns", "security", "development-tools::debugging", "development-tools::profiling", "development-tools::testing"]
+
+[dependencies]
+libc = "0.2"
