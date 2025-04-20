@@ -1,8 +1,8 @@
 # Rust Dylib Hijacking Framework
 
-![Crates.io](https://img.shields.io/crates/v/dylib_hook)
-![License](https://img.shields.io/crates/l/dylib_hook)
-![Build Status](https://img.shields.io/github/actions/workflow/status/KeiranY/dylib_hook/ci.yml?branch=main)
+[![Crates.io](https://img.shields.io/crates/v/dylib_hook)](https://crates.io/crates/dylib_hook)
+[![License](https://img.shields.io/crates/l/dylib_hook)](https://github.com/KeiranY/dylib_hook/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/KeiranY/dylib_hook/ci.yml?branch=main)](https://github.com/KeiranY/dylib_hook/actions/workflows/ci.yml)
 
 This project provides a framework for hooking functions loaded from dynamic libraries on Linux. It allows you to intercept and modify the behavior of functions at runtime, making it useful for debugging, monitoring, or altering the behavior of existing applications.
 
