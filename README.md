@@ -32,6 +32,23 @@ To run the example provided in this project, follow these steps:
 
 ## Usage
 
+### Installation
+
+To use this framework, configure your `Cargo.toml` file as follows:
+
+```toml
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ctor = "0.4"
+libc = "0.2"
+dylib_hook = "0.1"
+```
+
+`libc` is a required addition, `ctor` provides a helpful way of adding hooks on load.
+
+
 ### Creating a Hook
 
 Use the `create_hook!` macro to define a hook for a specific function. For example:
