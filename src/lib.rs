@@ -166,28 +166,29 @@ mod tests {
 
     #[test]
     fn multiple_hooks() {
-        create_hook!(open(cpath: *const c_char, oflag: c_int) -> c_int);
+        create_hook!(fopen(cpath: *const c_char, mode: *const c_char) -> *mut libc::FILE);
         thread_local! {
             static HOOK1_CALLED: RefCell<bool> = RefCell::new(false);
             static HOOK2_CALLED: RefCell<bool> = RefCell::new(false);
         }
 
-        fn hook1(cpath: *const c_char, oflag: c_int, chain: &mut open::Chain) -> c_int {
+        fn hook1(cpath: *const c_char, mode: *const c_char, chain: &mut fopen::Chain) -> *mut libc::FILE {
             HOOK1_CALLED.with(|called| *called.borrow_mut() = true);
-            chain.call(cpath, oflag)
+            chain.call(cpath, mode)
         }
 
-        fn hook2(cpath: *const c_char, oflag: c_int, chain: &mut open::Chain) -> c_int {
+        fn hook2(cpath: *const c_char, mode: *const c_char, chain: &mut fopen::Chain) -> *mut libc::FILE {
             HOOK2_CALLED.with(|called| *called.borrow_mut() = true);
-            chain.call(cpath, oflag)
+            chain.call(cpath, mode)
         }
 
-        open::add_hook(hook1);
-        open::add_hook(hook2);
+        fopen::add_hook(hook1);
+        fopen::add_hook(hook2);
 
         let path = std::ffi::CString::new("/etc/passwd").unwrap();
-        let fd = unsafe { open(path.as_ptr(), 0) };
-        assert!(fd >= 0); // Assuming the file descriptor is valid
+        let mode = std::ffi::CString::new("r").unwrap();
+        let file = unsafe { fopen(path.as_ptr(), mode.as_ptr()) };
+        assert!(!file.is_null()); // Assuming the file pointer is valid
 
         assert!(HOOK1_CALLED.with(|called| *called.borrow()));
         assert!(HOOK2_CALLED.with(|called| *called.borrow()));
@@ -195,27 +196,27 @@ mod tests {
 
     #[test]
     fn early_return_hook() {
-        create_hook!(open(cpath: *const c_char, oflag: c_int) -> c_int);
+        create_hook!(openat(dirfd: c_int, cpath: *const c_char, oflag: c_int) -> c_int);
         thread_local! {
             static HOOK1_CALLED: RefCell<bool> = RefCell::new(false);
             static HOOK2_CALLED: RefCell<bool> = RefCell::new(false);
         }
 
-        fn hook1(_cpath: *const c_char, _oflag: c_int, _chain: &mut open::Chain) -> c_int {
+        fn hook1(_dirfd: c_int, _cpath: *const c_char, _oflag: c_int, _chain: &mut openat::Chain) -> c_int {
             HOOK1_CALLED.with(|called| *called.borrow_mut() = true);
             0 // Early return, bypassing the chain
         }
 
-        fn hook2(cpath: *const c_char, oflag: c_int, chain: &mut open::Chain) -> c_int {
+        fn hook2(dirfd: c_int, cpath: *const c_char, oflag: c_int, chain: &mut openat::Chain) -> c_int {
             HOOK2_CALLED.with(|called| *called.borrow_mut() = true);
-            chain.call(cpath, oflag)
+            chain.call(dirfd, cpath, oflag)
         }
 
-        open::add_hook(hook1);
-        open::add_hook(hook2);
+        openat::add_hook(hook1);
+        openat::add_hook(hook2);
 
         let path = std::ffi::CString::new("/etc/passwd").unwrap();
-        let fd = unsafe { open(path.as_ptr(), 0) };
+        let fd = unsafe { openat(libc::AT_FDCWD, path.as_ptr(), 0) };
         assert_eq!(fd, 0); // Ensure the early return value is respected
 
         assert!(HOOK1_CALLED.with(|called| *called.borrow()));
@@ -224,24 +225,24 @@ mod tests {
 
     #[test]
     fn hook_protection() {
-        create_hook!(open(cpath: *const c_char, oflag: c_int) -> c_int);
+        create_hook!(open64(cpath: *const c_char, oflag: c_int) -> c_int);
         thread_local! {
             static HOOK_CALLED: RefCell<bool> = RefCell::new(false);
         }
 
-        fn hook_fn(_cpath: *const c_char, _oflag: c_int, _chain: &mut open::Chain) -> c_int {
+        fn hook_fn(_cpath: *const c_char, _oflag: c_int, _chain: &mut open64::Chain) -> c_int {
             HOOK_CALLED.with(|called| *called.borrow_mut() = true);
             -1
         }
 
-        open::add_hook(hook_fn);
+        open64::add_hook(hook_fn);
 
         // Simulate an internal call using with_hook_protection
         let result = with_hook_protection(
             || {
                 // Internal call
                 let path = std::ffi::CString::new("/etc/passwd").unwrap();
-                unsafe { open(path.as_ptr(), 0) }
+                unsafe { open64(path.as_ptr(), 0) }
             },
             || { -1 },
         );
@@ -252,22 +253,23 @@ mod tests {
 
     #[test]
     fn orig_bypasses_hooks() {
-        create_hook!(open(cpath: *const c_char, oflag: c_int) -> c_int);
+        create_hook!(fopen64(cpath: *const c_char, mode: *const c_char) -> *mut libc::FILE);
         thread_local! {
             static HOOK_CALLED: RefCell<bool> = RefCell::new(false);
         }
 
-        fn hook_fn(cpath: *const c_char, oflag: c_int, chain: &mut open::Chain) -> c_int {
+        fn hook_fn(cpath: *const c_char, mode: *const c_char, chain: &mut fopen64::Chain) -> *mut libc::FILE {
             HOOK_CALLED.with(|called| *called.borrow_mut() = true);
-            chain.call(cpath, oflag)
+            chain.call(cpath, mode)
         }
 
-        open::add_hook(hook_fn);
+        fopen64::add_hook(hook_fn);
 
         // Call the original function directly, bypassing hooks
         let path = std::ffi::CString::new("/etc/passwd").unwrap();
-        let fd = open::call_orig(path.as_ptr(), 0);
-        assert!(fd >= 0); // Assuming the file descriptor is valid
+        let mode = std::ffi::CString::new("r").unwrap();
+        let file = fopen64::call_orig(path.as_ptr(), mode.as_ptr());
+        assert!(!file.is_null()); // Assuming the file pointer is valid
 
         // Ensure the hook was not called
         assert!(!HOOK_CALLED.with(|called| *called.borrow()));
