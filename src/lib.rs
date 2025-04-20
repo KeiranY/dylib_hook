@@ -60,6 +60,7 @@ macro_rules! create_hooks {
 macro_rules! create_hook {
     ($orig_fn:ident ($($param:ident: $ptype:ty),*) -> $ret:ty) => {
         #[allow(dead_code)]
+        #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $orig_fn($($param: $ptype),*) -> $ret {
             dylib_hook::with_hook_protection(
                 || {
